@@ -14,6 +14,8 @@ import sys
 import time
 import json
 import re
+import stat
+import glob
 
 
 # ─────────────────────────────────────────────
@@ -34,10 +36,7 @@ def run(cmd, timeout=30, **kwargs):
 
 def require_root():
     if os.geteuid() != 0:
-        messagebox.showerror(
-            "Root Required",
-            "PyFlash must be run as root (sudo python3 pyflash.py)."
-        )
+        print("Error: PyFlash must be run as root (sudo python3 pyflash.py).")
         sys.exit(1)
 
 
@@ -1004,7 +1003,34 @@ class PyFlash(tk.Tk):
 #  Entry point
 # ─────────────────────────────────────────────
 
+def fix_x11_display():
+    """
+    When run via plain `sudo`, DISPLAY and XAUTHORITY are stripped from the
+    environment. Re-inject them from the calling user's environment by reading
+    /proc/<ppid>/environ so tkinter can connect to the X server.
+    """
+    if os.environ.get("DISPLAY"):
+        return  # already set, nothing to do
+
+    try:
+        # Find the environment of the parent process (the shell that called sudo)
+        ppid = os.getppid()
+        with open(f"/proc/{ppid}/environ", "rb") as f:
+            env_bytes = f.read()
+        env = dict(
+            item.split(b"=", 1)
+            for item in env_bytes.split(bytes([0]))
+            if b"=" in item
+        )
+        for key in (b"DISPLAY", b"XAUTHORITY", b"WAYLAND_DISPLAY", b"XDG_RUNTIME_DIR"):
+            if key in env:
+                os.environ[key.decode()] = env[key].decode()
+    except (OSError, ValueError):
+        pass
+
+
 if __name__ == "__main__":
+    fix_x11_display()
     require_root()
     app = PyFlash()
     app.mainloop()
