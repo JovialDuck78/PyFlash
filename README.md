@@ -1,5 +1,7 @@
 ## PyFlash
 A USB ISO flashing program written for Linux. I noticed that there was no Rufus alternative for Linux, so I made one!
+# What it does:
+Functions as a way to write ISOs on external drives more than just DD image mode. You can also now format the drive for the ISO to support windows ISOs. It supports GPT and MBR formatting. You can also use it to reformat external drives in a way similar to GParted just as an added bonus!
 
 | Package | Arch | Debian/Ubuntu | Fedora | Void |
 |---|---|---|---|---|
